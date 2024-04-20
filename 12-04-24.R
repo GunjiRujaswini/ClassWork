@@ -1,5 +1,3 @@
-#Harsharaj Challa
-
 # Initialize variables
 x <- -1
 count <- 0
