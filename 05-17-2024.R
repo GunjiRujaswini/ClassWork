@@ -1,68 +1,53 @@
-# Install and load necessary libraries
-install.packages("tidyverse")
-install.packages("caret")
-install.packages("e1071")  # Required for caret package dependency
+library(ggplot2)
 
-library(tidyverse)
-library(caret)
+# Read a csv file
+file_path <- "C:/Users/gruja/Downloads/Boston.csv"
+data <- read.csv(file_path)
+str(data)
 
-# Set the working directory to where the file is located
-setwd("C:/Users/gruja/Downloads")  # Change this to your file path
+# Linear Regression: Let's assume we are using 'lstat' (percentage of lower status population) to predict 'medv' (median value of owner-occupied homes in $1000s)
+model_linear <- lm(medv ~ lstat, data=data)
 
-# Load the dataset
-boston <- read.csv("boston.csv")
 
-# View the first few rows of the dataset
-head(boston)
+# Predictions
+data$pred_linear <- predict(model_linear)
 
-# Check for missing values
-sum(is.na(boston))
+# Plotting
+plot(data$lstat, data$medv, main="Linear Regression: LSTAT vs MEDV",
+     xlab="LSTAT", ylab="MEDV", col="blue", pch=16)
+lines(data$lstat, data$pred_linear, col="red", lwd=2)
+legend("topright", legend=c("Actual data", "Fitted line"), col=c("blue", "red"), pch=c(16, NA), lty=c(NA, 1))
 
-# Summary of the dataset
-summary(boston)
+# Polynomial Regression: Using 'lstat' to predict 'medv' with a degree 3 polynomial
+model_poly <- lm(medv ~ poly(lstat, 3), data=data)  # Degree 3 polynomial
 
-# Scatter plot of MEDV vs RM
-ggplot(boston, aes(x = RM, y = MEDV)) +
-  geom_point() +
-  geom_smooth(method = "lm", col = "red") +
-  labs(title = "Scatter plot of MEDV vs RM",
-       x = "Average number of rooms per dwelling (RM)",
-       y = "Median value of owner-occupied homes in $1000s (MEDV)")
+# Predictions
+data <- data[order(data$lstat), ]  # Order the data by lstat
+data$pred_poly <- predict(model_poly, newdata=data)
 
-# Correlation matrix
-correlation_matrix <- cor(boston)
-print(correlation_matrix)
+# Plotting
+plot(data$lstat, data$medv, main="Polynomial Regression: LSTAT vs MEDV",
+     xlab="LSTAT", ylab="MEDV", col="blue", pch=16)
+lines(data$lstat, data$pred_poly, col="red", lwd=2)
+legend("topright", legend=c("Actual data", "Fitted polynomial"), col=c("blue", "red"), pch=c(16, NA), lty=c(NA, 1))
 
-# Building the linear regression model
-linear_model <- lm(MEDV ~ ., data = boston)
+# Create a binary variable 'medv_high' (1 if medv > median, else 0)
+data$medv_high <- ifelse(data$medv > median(data$medv), 1, 0)
 
-# Summary of the linear regression model
-summary(linear_model)
+# Logistic Regression: Using 'lstat' to predict 'medv_high'
+model_logistic <- glm(medv_high ~ lstat, data=data, family=binomial)
 
-# Predicting the MEDV values
-predictions <- predict(linear_model, boston)
+# Predictions
+data$pred_logistic <- predict(model_logistic, type="response")
+data$pred_class <- ifelse(data$pred_logistic > 0.5, 1, 0)
 
-# Calculating RMSE
-rmse <- sqrt(mean((boston$MEDV - predictions)^2))
-print(paste("RMSE: ", rmse))
+# Plotting
+plot(data$lstat, data$medv_high, main="Logistic Regression: LSTAT vs MEDV_HIGH",
+     xlab="LSTAT", ylab="MEDV_HIGH", col="blue", pch=16)
+points(data$lstat, data$pred_class, col="red", pch=4)
+legend("topright", legend=c("Actual data", "Predicted class"), col=c("blue", "red"), pch=c(16, 4))
 
-# Plot actual vs predicted values
-ggplot(boston, aes(x = MEDV, y = predictions)) +
-  geom_point() +
-  geom_abline(slope = 1, intercept = 0, col = "red") +
-  labs(title = "Actual vs Predicted MEDV",
-       x = "Actual MEDV",
-       y = "Predicted MEDV")
+# Check the structure of the data
+str(data)
+summary(data)
 
-# Optional: Polynomial regression model (e.g., adding a quadratic term for RM)
-poly_model <- lm(MEDV ~ poly(RM, 2) + . - RM, data = boston)
-
-# Summary of the polynomial regression model
-summary(poly_model)
-
-# Predicting the MEDV values with the polynomial model
-poly_predictions <- predict(poly_model, boston)
-
-# Calculating RMSE for the polynomial model
-poly_rmse <- sqrt(mean((boston$MEDV - poly_predictions)^2))
-print(paste("Polynomial RMSE: ", poly_rmse))
