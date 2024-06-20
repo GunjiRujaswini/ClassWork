@@ -43,3 +43,21 @@ print("Final content of X:")
 plot(X)
 hist(X)
 
+# Generate the vector of numbers
+x <-rnorm(100000)
+# count how many are between -1 and 1
+count <- 0
+for (i in x)
+if (i>-1 & i<1)
+  count <- count+1
+# Get and print the percentage, should be around 68%
+percent <- count/length(x)
+percent
+x <-rnorm(80000)
+plot(x)
+hist(x)
+head(x)
+tail(x)
+range(x)
+summary(x)
+boxplot(x)
